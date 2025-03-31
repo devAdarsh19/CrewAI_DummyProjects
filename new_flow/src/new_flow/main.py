@@ -1,54 +1,53 @@
 #!/usr/bin/env python
-from random import randint
-
 from pydantic import BaseModel
-
 from crewai.flow import Flow, listen, start
+from pathlib import Path
+from pydub import AudioSegment
+from pydub.utils import make_chunks
+from dotenv import load_dotenv
+from openai import OpenAI
+client = OpenAI()
 
-from crews.poem_crew.poem_crew import PoemCrew
+load_dotenv()
+
+class MeetingMinutesState(BaseModel):
+    transcript: str = ""
+    meeitng_minutes: str = ""
 
 
-class PoemState(BaseModel):
-    sentence_count: int = 1
-    poem: str = ""
-
-
-class PoemFlow(Flow[PoemState]):
+class MeetingMeetingFlow(Flow[MeetingMinutesState]):
 
     @start()
-    def generate_sentence_count(self):
-        print("Generating sentence count")
-        self.state.sentence_count = randint(1, 5)
+    def transcribe_meeting(self):
+        print("Generating transcription")
+        
+        SCRIPT_DIR = Path(__file__).parent
+        audio_path = str(SCRIPT_DIR / "EarningsCall.wav")
+        
+        audio = AudioSegment.from_file(audio_path, format="wav")
+        
+        chunk_len_ms = 60000
+        chunks = make_chunks(audio, chunk_len_ms)
+        
+        full_transcription = ""
+        for i, chunk in enumerate(chunks):
+            print(f"Transcribing chunk {i+1}/{len(chunks)}")
+            chunk_path = f"chunk_{i}.wav"
+            chunk.export(chunk_path, format="wav")
+            
+            with open(chunk_path, "rb") as audio_file:
+                transcription = client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file
+                )
+                full_transcription += transcription.text + " "
+                
+        self.state.transcript = full_transcription
 
-    @listen(generate_sentence_count)
-    def generate_poem(self):
-        print("Generating poem")
-        result = (
-            PoemCrew()
-            .crew()
-            .kickoff(inputs={"sentence_count": self.state.sentence_count})
-        )
-
-        print("Poem generated", result.raw)
-        self.state.poem = result.raw
-
-    @listen(generate_poem)
-    def save_poem(self):
-        print("Saving poem")
-        with open("poem.txt", "w") as f:
-            f.write(self.state.poem)
-
-
+    
 def kickoff():
-    poem_flow = PoemFlow()
-    poem_flow.kickoff()
-
-
-def plot():
-    poem_flow = PoemFlow()
-    poem_flow.plot()
-
+    meeting_minutes_flow = MeetingMeetingFlow()
+    meeting_minutes_flow.kickoff()
 
 if __name__ == "__main__":
     kickoff()
-    plot()
