@@ -1,21 +1,21 @@
 ### CrewAI Learning Projects
 
 ## Creating a virtual environment
-Create a virtual environment to install all dependencies using the command:
-```
-python -m venv <env_name>
-```
+- Create a virtual environment to install all dependencies using the command:
+  ```
+  python -m venv <env_name>
+  ```
 
-Activate your virtual environment:
-(On Windows)
-```
-<env_name>/Scripts/activate
-```
-
-(On Linux/MacOS)
-```
-source <env_name>/bin/activate
-```
+- Activate your virtual environment:
+  (On Windows)
+  ```
+  <env_name>/Scripts/activate
+  ```
+  
+  (On Linux/MacOS)
+  ```
+  source <env_name>/bin/activate
+  ```
 
 ## Install dependencies
 ```
